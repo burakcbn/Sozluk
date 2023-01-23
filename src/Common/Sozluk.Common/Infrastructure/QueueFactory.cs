@@ -18,7 +18,7 @@ namespace Sozluk.Common.Infrastructure
                                 .EnsureQueue(queueName, exchangeName)
                                 .Model;
 
-            var body=Encoding.UTF8.GetBytes(JsonSerializer.Serialize(obj));
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(obj));
             channel.BasicPublish(exchangeName, queueName, null, body);
         }
 
@@ -41,12 +41,39 @@ namespace Sozluk.Common.Infrastructure
         }
         public static EventingBasicConsumer EnsureQueue(this EventingBasicConsumer consumer,
                                                           string queueName,
-                                                          string exchangeName = SozlukConstants.DefaultExchangeType)
+                                                          string exchangeName)
         {
 
             consumer.Model.QueueDeclare(queueName, false, false, false, null);
             consumer.Model.QueueBind(queueName, exchangeName, queueName);
             return consumer;
         }
+
+        public static EventingBasicConsumer Receive<T>(this EventingBasicConsumer consumer, Action<T> action)
+        {
+            consumer.Received += (m, eventArgs) =>
+            {
+                var body = eventArgs.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+
+                var model = JsonSerializer.Deserialize<T>(message);
+                action(model);
+
+                consumer.Model.BasicAck(eventArgs.DeliveryTag, false);
+            };
+            return consumer;
+        }
+
+
+        public static EventingBasicConsumer StartConsumer(this EventingBasicConsumer consumer, string queueName)
+        {
+            consumer.Model.BasicConsume(queueName, false, consumer);
+            return consumer;
+
+        }
+
+
+
+
     }
 }
