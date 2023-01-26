@@ -21,7 +21,7 @@ namespace Sozluk.Api.Application.Features.Command.Entry.CreateFav
                                      new CreateEntryFavEvent()
                                      {
                                          CreatedById= request.CreatedById.Value,
-                                         EntryId=request.EntryId.Value,
+                                         EntryId=request.EntryId,
                                      });
 
             return Task.FromResult(true);
